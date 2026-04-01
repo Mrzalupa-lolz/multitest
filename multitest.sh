@@ -105,7 +105,7 @@ install_package() {
     echo -e "${YELLOW}Устанавливаю ${pkg}...${NC}"
 
     case "$pm" in
-        apt)     apt-get update -qq && apt-get install -y -qq "$pkg" ;;
+        apt)     DEBIAN_FRONTEND=noninteractive apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y "$pkg" ;;
         dnf)     dnf install -y -q "$pkg" ;;
         yum)     yum install -y -q "$pkg" ;;
         apk)     apk add --quiet "$pkg" ;;
