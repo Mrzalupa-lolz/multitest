@@ -203,22 +203,78 @@ run_sysbench_cpu() {
     sysbench cpu run --threads=1
 }
 
+MULTITEST_SKIPPED=0
+
+multitest_skip_handler() {
+    MULTITEST_SKIPPED=1
+}
+
 run_all() {
     print_separator "МУЛЬТИТЕСТ — запуск всех тестов"
+    echo -e "  ${YELLOW}Ctrl+C${NC} во время теста — пропустить текущий"
+    echo -e "  Между тестами: ${GREEN}Enter${NC} — продолжить | ${YELLOW}s${NC} — пропустить | ${RED}q${NC} — выход"
+    echo ""
     install_deps
 
-    run_ip_region
-    run_censorcheck_geoblock
-    run_censorcheck_dpi
-    run_iperf3_ru
-    run_yabs
-    run_ip_check_place
-    run_bench_sh
-    run_ip_quality
-    run_sysbench_cpu
+    local test_funcs=(
+        "run_ip_region"
+        "run_censorcheck_geoblock"
+        "run_censorcheck_dpi"
+        "run_iperf3_ru"
+        "run_yabs"
+        "run_ip_check_place"
+        "run_bench_sh"
+        "run_ip_quality"
+        "run_sysbench_cpu"
+    )
+    local test_names=(
+        "IP Region"
+        "Censorcheck — проверка геоблока"
+        "Censorcheck — DPI (серверы РФ)"
+        "iPerf3 — тест до российских серверов"
+        "YABS — бенчмарк сервера"
+        "IP Check Place — блокировки зарубежными сервисами"
+        "bench.sh — параметры сервера и скорость"
+        "IPQuality"
+        "sysbench CPU — тест процессора"
+    )
+
+    local total=${#test_funcs[@]}
+
+    for i in $(seq 0 $((total - 1))); do
+        local num=$((i + 1))
+        echo ""
+        echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "  ${CYAN}[${num}/${total}]${NC} Следующий: ${BOLD}${test_names[$i]}${NC}"
+        echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -ne "  ${BOLD}Enter${NC} — запустить | ${YELLOW}s${NC} — пропустить | ${RED}q${NC} — выход: "
+        read -r action
+
+        case "$action" in
+            s|S)
+                echo -e "  ${YELLOW}Пропущено.${NC}"
+                continue
+                ;;
+            q|Q)
+                echo -e "\n${GREEN}Мультитест прерван. Выполнено тестов: $((num - 1))/${total}${NC}"
+                return
+                ;;
+        esac
+
+        # Запуск теста в подоболочке, Ctrl+C убивает только тест
+        MULTITEST_SKIPPED=0
+        trap multitest_skip_handler INT
+        ( ${test_funcs[$i]} )
+        trap - INT
+
+        if [[ $MULTITEST_SKIPPED -eq 1 ]]; then
+            echo ""
+            echo -e "  ${YELLOW}Тест пропущен (Ctrl+C).${NC}"
+        fi
+    done
 
     echo ""
-    echo -e "${GREEN}${BOLD}Все тесты завершены!${NC}"
+    echo -e "${GREEN}${BOLD}Все тесты завершены! (${total}/${total})${NC}"
 }
 
 # ============================================================
