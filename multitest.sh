@@ -212,7 +212,7 @@ multitest_skip_handler() {
 run_all() {
     print_separator "МУЛЬТИТЕСТ — запуск всех тестов"
     echo -e "  ${YELLOW}Ctrl+C${NC} во время теста — пропустить текущий"
-    echo -e "  Между тестами: ${GREEN}Enter${NC} — продолжить | ${YELLOW}s${NC} — пропустить | ${RED}q${NC} — выход"
+    echo -e "  Тесты будут запускаться ${BOLD}автоматически${NC} один за другим."
     echo ""
     install_deps
 
@@ -242,26 +242,16 @@ run_all() {
     local total=${#test_funcs[@]}
 
     for i in $(seq 0 $((total - 1))); do
-        local num=$((i + 1))
+        local num=$s((i + 1))
         echo ""
         echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-        echo -e "  ${CYAN}[${num}/${total}]${NC} Следующий: ${BOLD}${test_names[$i]}${NC}"
+        echo -e "  ${CYAN}[${num}/${total}]${NC} Запуск: ${BOLD}${test_names[$i]}${NC}"
         echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-        echo -ne "  ${BOLD}Enter${NC} — запустить | ${YELLOW}s${NC} — пропустить | ${RED}q${NC} — выход: "
-        read -r action
+        
+        # Небольшая пауза перед стартом, чтобы юзер успел понять, что происходит
+        sleep 2
 
-        case "$action" in
-            s|S)
-                echo -e "  ${YELLOW}Пропущено.${NC}"
-                continue
-                ;;
-            q|Q)
-                echo -e "\n${GREEN}Мультитест прерван. Выполнено тестов: $((num - 1))/${total}${NC}"
-                return
-                ;;
-        esac
-
-        # Запуск теста в подоболочке, Ctrl+C убивает только тест
+        # Запуск теста в подоболочке
         MULTITEST_SKIPPED=0
         trap multitest_skip_handler INT
         ( ${test_funcs[$i]} )
@@ -269,8 +259,10 @@ run_all() {
 
         if [[ $MULTITEST_SKIPPED -eq 1 ]]; then
             echo ""
-            echo -e "  ${YELLOW}Тест пропущен (Ctrl+C).${NC}"
+            echo -e "  ${YELLOW}Тест пропущен пользователем (Ctrl+C).${NC}"
         fi
+        
+        echo -e "\n${GREEN}--- Тест ${num} завершен ---${NC}\n"
     done
 
     echo ""
