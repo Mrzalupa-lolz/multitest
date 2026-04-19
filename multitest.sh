@@ -212,7 +212,7 @@ multitest_skip_handler() {
 run_all() {
     print_separator "МУЛЬТИТЕСТ — запуск всех тестов"
     echo -e "  ${YELLOW}Ctrl+C${NC} во время теста — пропустить текущий"
-    echo -e "  Тесты будут запускаться ${BOLD}автоматически${NC} один за другим."
+    echo -e "  Тесты запускаются ${BOLD}автоматически${NC}."
     echo ""
     install_deps
 
@@ -242,16 +242,16 @@ run_all() {
     local total=${#test_funcs[@]}
 
     for i in $(seq 0 $((total - 1))); do
-        local num=$s((i + 1))
+        local num=$((i + 1))
         echo ""
         echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo -e "  ${CYAN}[${num}/${total}]${NC} Запуск: ${BOLD}${test_names[$i]}${NC}"
         echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         
-        # Небольшая пауза перед стартом, чтобы юзер успел понять, что происходит
+        # Пауза 2 секунды, чтобы успеть прочитать заголовок
         sleep 2
 
-        # Запуск теста в подоболочке
+        # Запуск теста
         MULTITEST_SKIPPED=0
         trap multitest_skip_handler INT
         ( ${test_funcs[$i]} )
@@ -259,14 +259,14 @@ run_all() {
 
         if [[ $MULTITEST_SKIPPED -eq 1 ]]; then
             echo ""
-            echo -e "  ${YELLOW}Тест пропущен пользователем (Ctrl+C).${NC}"
+            echo -e "  ${YELLOW}Тест пропущен (Ctrl+C).${NC}"
         fi
         
-        echo -e "\n${GREEN}--- Тест ${num} завершен ---${NC}\n"
+        echo -e "\n${GREEN}--- Готово ---${NC}\n"
     done
 
     echo ""
-    echo -e "${GREEN}${BOLD}Все тесты завершены! (${total}/${total})${NC}"
+    echo -e "${GREEN}${BOLD}Все тесты завершены!${NC}"
 }
 
 # ============================================================
